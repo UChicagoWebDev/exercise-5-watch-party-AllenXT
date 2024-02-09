@@ -40,15 +40,16 @@ def query_db(query, args=(), one=False):
     db = get_db()
     cursor = db.execute(query, args)
     print("query_db")
-    print(cursor)
+    # print(cursor)
     rows = cursor.fetchall()
-    print(rows)
+    # print(rows)
     db.commit()
     cursor.close()
     if rows:
         if one: 
             return rows[0]
         return rows
+    # print("None")
     return None
 
 def new_user():
@@ -127,6 +128,7 @@ def signup():
 @app.route('/profile')
 def profile():
     print("profile")
+    
     user = get_user_from_cookie(request)
     if user:
         return render_with_error_handling('profile.html', user=user)
@@ -139,20 +141,23 @@ def login():
     print("login")
     user = get_user_from_cookie(request)
 
+    # print("login request: ", request)
     if user:
         return redirect('/')
     
     if request.method == 'POST':
-        name = request.form['name']
-        password = request.form['name']
+        name = request.form['username']
+        password = request.form['password']
         u = query_db('select * from users where name = ? and password = ?', [name, password], one=True)
-        if user:
+        if u:
             resp = make_response(redirect("/"))
-            resp.set_cookie('user_id', u.id)
-            resp.set_cookie('user_password', u.password)
+            resp.set_cookie('user_id', str(u['id']))
+            resp.set_cookie('user_password', u['password'])
             return resp
-
-    return render_with_error_handling('login.html', failed=True)   
+        else:
+            return render_with_error_handling('login.html', failed=True)
+        
+    return render_with_error_handling('login.html')   
 
 @app.route('/logout')
 def logout():
@@ -171,16 +176,74 @@ def room(room_id):
             room=room, user=user)
 
 # -------------------------------- API ROUTES ----------------------------------
-
 # POST to change the user's name
-@app.route('/api/user/name')
+@app.route('/api/user/name', methods=['POST'])
 def update_username():
-    return {}, 403
+    user = get_user_from_cookie(request)
+    if not user:
+        return {}, 403
+    # print("request data: ", request.json)
+    new_name = request.json.get('username')
+    # print('new_name:', new_name)
+    api_key = request.headers.get('Authorization')
+    # print("api_key: ", api_key)
+    query_db('update users set name = ? where api_key = ?', [new_name, api_key])
+    return {}, 200
 
 # POST to change the user's password
+@app.route('/api/user/password', methods=['POST'])
+def update_password():
+    user = get_user_from_cookie(request)
+    if not user:
+        return {}, 403
+    # print("request data: ", request.json)
+    new_password = request.json.get('password')
+    api_key = request.headers.get('Authorization')
+    query_db('update users set password = ? where api_key = ?', [new_password, api_key])
+    return {}, 200
 
 # POST to change the name of a room
+@app.route('/api/rooms/<int:room_id>', methods=['POST'])
+def update_room_name(room_id):
+    user = get_user_from_cookie(request)
+    if not user:
+        return {}, 403
+    # print("Request: ", request.json)
+
+    new_name = request.json.get('roomName')
+    # print("new_name",new_name)
+    # print("room_id", room_id)
+    query_db('update rooms set name = ? where id = ?', [new_name, room_id])
+    return {}, 200
 
 # GET to get all the messages in a room
+@app.route('/api/rooms/<int:room_id>/messages', methods=['GET'])
+def get_messages(room_id):
+    user = get_user_from_cookie(request)
+    if not user:
+        return {}, 403
+    
+    messages = query_db('select * from messages left join users on messages.user_id = users.id where room_id = ?', [room_id])
+    if messages:
+        # print("There are messages")
+        return jsonify([dict(msg) for msg in messages]), 200
+    else:
+        # print("There are not messages")
+        return jsonify([]), 200
 
 # POST to post a new message to a room
+@app.route('/api/rooms/<int:room_id>/messages', methods=['POST'])
+def post_message(room_id):
+    user = get_user_from_cookie(request)
+    if not user:
+        return {}, 403
+    
+    api_key = request.headers.get('Authorization')
+    print("api_key: ", api_key)
+    user_id = query_db('select id from users where api_key = ?', [api_key], one = True)['id']
+    print("user_id: ", user_id)
+    body = request.json.get('body')
+    print("body: ", body)
+    query_db('insert into messages (user_id, room_id, body) values (?, ?, ?)', [user_id, room_id, body])
+    return {}, 200
+

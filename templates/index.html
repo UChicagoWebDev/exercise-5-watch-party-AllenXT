@@ -32,7 +32,7 @@
     <h1>Watch Party</h1>
     {% if user %}
     <form action="/rooms/new" method="POST">
-      <button value="create">Create a Room</button>
+      <button id="createRoomButton" value="create">Create a Room</button>
     </form>
     {% else %}
     <form method="POST" action="/signup">
@@ -53,7 +53,7 @@
     {% endif %}
     <div id="createRoom">
       <form action="/rooms/new" method="POST">
-        <button value="create">Create a Room</button>
+        <button id="createRoomButton" value="create">Create a Room</button>
       </form>
     </div>
   </div>

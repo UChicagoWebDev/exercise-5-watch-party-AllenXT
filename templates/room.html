@@ -22,19 +22,19 @@
     <div>Chatting in:</div>
     <h3 class="display">
       <span class="roomName">{{ room['name'] }}</span>
-      <!-- TODO: when clicked, 
+      <!-- when clicked, 
         - remove `hide` from the `edit` h3 below
         - add `hide` to the parent h3 here -->
-      <a href="#"><span class="material-symbols-outlined">edit</span></a></h3>
+      <a href="#" onclick="editRoomName()"><span class="material-symbols-outlined">edit</span></a>
     </h3>
     <h3 class="edit hide">
       <input value="{{ room['name'] }}">
-      <!-- TODO: when clicked,
+      <!-- when clicked,
         - POST to update the room name
         - update `roomName` above with the new name
         - remove `hide` from the `display` h3 above
         - add `hide` to the parent h3 here -->
-      <a href="#"><span class="material-symbols-outlined">save</span></a></h3>
+      <a href="#" onclick="updateRoomName()"><span class="material-symbols-outlined">save</span></a>
     </h3>
     <div class="invite">
       Invite users to this chat at:
@@ -52,11 +52,11 @@
       <form>
         <label for="comment">What do you have to say?</label>
         <textarea name="comment"></textarea>
-        <button type="submit" value="Post">Post</button>
+        <button type="submit" value="Post" onclick="postMessage()">Post</button>
       </form>
     </div>
     <div class="messages">
-      <message>
+      <!-- <message>
         <author>Mr Chatterworth</author>
         <content>Good evening! And how is everyone feeling?</content>
       </message>
@@ -79,7 +79,7 @@
       <message>
         <author>Mr Chatterworth</author>
         <content>Indeed, M. Cat. Indeed. 🧐</content>
-      </message>
+      </message> -->
     </div>
   </div>
   {% else %}
